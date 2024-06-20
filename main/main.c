@@ -23,6 +23,7 @@
 #include "cmd_system.h"
 #include "../src/ble_hs_hci_priv.h"
 #include "gatts_sens.h"
+#include "nvm.h"
 
 /* 0000xxxx-8c26-476f-89a7-a108033a69c7 */
 #define THRPT_UUID_DECLARE(uuid16)                                \
@@ -715,57 +716,6 @@ void blecent_host_task(void *param)
     printf("ble donedeal\n");
 }
 
-/** 'free' command prints available heap memory */
-
-static int debug_boxNo(int argc, char **argv)
-{
-    ESP_LOGI(tag, "BoxNo maybe working?, lol!\n");
-//    printf("%" PRIu32 "\n", esp_get_free_heap_size());
-    if(argc == 1) {
-        nvs_handle_t nvsHandle;
-        esp_err_t err = nvs_open("cfg", NVS_READONLY, &nvsHandle);
-        if(err == ESP_OK) {
-            char data[32] = {0};
-            size_t len = 32;
-            err = nvs_get_str(nvsHandle, "box", data, &len);
-            nvs_close(nvsHandle);
-            if(err == ESP_OK) {
-                printf("Found value[%d]: %s\n", len, data);
-            } else {
-                printf("no saved box number found\n");
-            }
-        } else {
-            printf("unable to open handle\n");
-        }
-    }
-    if(argc == 2) {
-        nvs_handle_t nvsHandle;
-        esp_err_t err = nvs_open("cfg", NVS_READWRITE, &nvsHandle);
-        if(err == ESP_OK) {
-            err = nvs_set_str(nvsHandle, "box", argv[1]);
-            nvs_close(nvsHandle);
-            if(err == ESP_OK) {
-                printf("Set box: %s\n", argv[1]);
-            } else {
-                printf("box number failed to save found\n");
-            }
-        } else {
-            printf("unable to open handle\n");
-        }
-    }
-    return 0;
-}
-
-static void register_BoxNo(void)
-{
-    const esp_console_cmd_t cmd = {
-            .command = "box",
-            .help = "Get or set the box number",
-            .hint = NULL,
-            .func = &debug_boxNo,
-    };
-    ESP_ERROR_CHECK( esp_console_cmd_register(&cmd) );
-}
 
 static int debug_stop(int argc, char **argv)
 {
@@ -1181,7 +1131,7 @@ app_main(void)
     esp_console_dev_uart_config_t uart_config = ESP_CONSOLE_DEV_UART_CONFIG_DEFAULT();
     esp_console_repl_t *repl = NULL;
     ESP_ERROR_CHECK(esp_console_new_repl_uart(&uart_config, &repl_config, &repl));
-    register_BoxNo();
+    nvm_register_console();
     register_stop();
     register_start();
 
@@ -1194,18 +1144,15 @@ app_main(void)
     nimble_port_freertos_init(blecent_host_task);
 
 
-
-
-
-    printf("\n ===================================================================\n");
-    printf(" |       ___      __  _  __    __    ___  __   ____                |\n");
-    printf(" |      / _ \\___ / /_/ |/ /__ / /_  / _ )/ /  / __/                |\n");
-    printf(" |     / // / -_) __/    / -_) __/ / _  / /__/ _/                  |\n");
-    printf(" |    /____/\\__/\\__/_/|_/\\__/\\__/ /____/____/___/0                 |\n");
-    printf(" |                                                                 |\n");
-    printf(" |  1. Print 'help' to gain overview of commands                   |\n");
-    printf(" |                                                                 |\n");
-    printf("\n ===================================================================\n");
+    printf("\n ========================================================\n");
+    printf(" |       ___      __  _  __    __    ___  __   ____     |\n");
+    printf(" |      / _ \\___ / /_/ |/ /__ / /_  / _ )/ /  / __/     |\n");
+    printf(" |     / // / -_) __/    / -_) __/ / _  / /__/ _/       |\n");
+    printf(" |    /____/\\__/\\__/_/|_/\\__/\\__/ /____/____/___/0      |\n");
+    printf(" |                                                      |\n");
+    printf(" |  1. Print 'help' to gain overview of commands        |\n");
+    printf(" |                                                      |\n");
+    printf(" ========================================================\n");
 
     const char *prompt = LOG_COLOR_I "DetNet >> " LOG_RESET_COLOR;
 
